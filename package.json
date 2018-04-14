@@ -1,0 +1,37 @@
+{
+  "name": "axe-admin",
+  "version": "0.0.1",
+  "description": "Admin server for Axe to optimization the process of application development",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node ./bin/www"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/CodingForMoney/axe-admin.git"
+  },
+  "keywords": [
+    "axe"
+  ],
+  "author": "lxm",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/CodingForMoney/axe-admin/issues"
+  },
+  "homepage": "https://github.com/CodingForMoney/axe-admin#readme",
+  "dependencies": {
+    "bluebird": "^3.5.1",
+    "body-parser": "^1.18.2",
+    "cookie-parser": "^1.4.3",
+    "cors": "^2.8.4",
+    "dateformat": "^3.0.3",
+    "express": "^4.16.3",
+    "express-session": "^1.15.6",
+    "http-proxy-middleware": "^0.18.0",
+    "md5": "^2.2.1",
+    "node-cache": "^4.2.0",
+    "sqlite3": "^4.0.0"
+  },
+  "devDependencies": {}
+}

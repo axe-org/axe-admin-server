@@ -1,0 +1,78 @@
+#!/usr/bin/env node
+const path = require('path')
+const config = require('../src/config')
+const process = require('process')
+
+let workPath = process.cwd()
+
+if (process.argv.length === 3) {
+  let inputPath = process.argv[2]
+  if (path.isAbsolute(inputPath)) {
+    workPath = inputPath
+  } else {
+    workPath = path.join(workPath, process.argv[2])
+  }
+}
+let binPath = __dirname // 可执行文件目录
+config.initConfig(binPath, workPath)
+
+const session = require('express-session')
+const cors = require('cors')
+const userSevice = require('../src/service/user')
+const dao = require('../src/dao')
+const express = require('express')
+const proxy = require('http-proxy-middleware')
+// const easyMonitor = require('easy-monitor');
+// easyMonitor('你的项目名称');
+
+// 初始化
+dao.initDB()
+  .then(userSevice.initSettingAdmin)
+  .catch(err => {
+  // 初始化失败，则关闭应用。
+    console.log('initDB 失败 :', err)
+    process.exit(1)
+  })
+
+const app = express()
+
+const bodyParser = require('body-parser')
+app.use(bodyParser.urlencoded({extended: false}))
+app.use(bodyParser.json())
+
+// 跨域问题解决
+app.use(cors({credentials: true, origin: config.corsOrigin}))
+
+// 设置生产环境的 离线包管理页面的反向代理。
+app.use('/offlinePack', proxy({
+  target: config.offlinePackAdminServer,
+  pathRewrite: {
+    '^/offlinePack': ''
+  },
+  changeOrigin: true
+}))
+
+// 设置session和cookie
+app.use(session({
+  secret: 'keyboard cat',
+  resave: false,
+  saveUninitialized: false,
+  cookie: { maxAge: 2 * 30 * 24 * 60 * 60 * 1000 }// 设置超时时间两个月。
+}))
+
+const dispatchRouter = require('../src/router')
+dispatchRouter(app)
+// TODO 这里设置反向代理规则。
+// const adminWebPath = path.join(config.serverPath, 'static')
+// app.use(adminRouter.path, express.static(adminWebPath))
+// if (config.local) {
+//   app.use(config.local.publicPath, express.static(config.local.storageDir))
+// }
+
+let port = config.port
+
+let server = app.listen(port, function () {
+  let host = server.address().address
+  let port = server.address().port
+  console.log('应用实例，访问地址为 http://%s:%s', host, port)
+})
