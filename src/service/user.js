@@ -1,7 +1,6 @@
 // service层做具体业务。
 const userDAO = require('../dao').userDAO
 const config = require('../config')
-const Promise = require('bluebird')
 const conf = require('../conf')
 const md5 = require('md5')
 // 初始化设置的管理信息

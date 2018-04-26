@@ -2,7 +2,6 @@ const appDAO = require('../dao').appDAO
 const timelineDAO = require('../dao').timelineDAO
 const dateFormat = require('dateformat')
 // const config = require('../config')
-const Promise = require('bluebird')
 const conf = require('../conf')
 
 // 获取当前进行中的app版本信息

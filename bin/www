@@ -24,7 +24,7 @@ const express = require('express')
 const proxy = require('http-proxy-middleware')
 // const easyMonitor = require('easy-monitor');
 // easyMonitor('你的项目名称');
-
+// const jenkins = require('../src/service/jenkins')
 // 初始化
 dao.initDB()
   .then(userSevice.initSettingAdmin)
@@ -42,6 +42,10 @@ app.use(bodyParser.json())
 
 // 跨域问题解决
 app.use(cors({credentials: true, origin: config.corsOrigin}))
+
+console.log(config.staticPath)
+// 两个文件夹的静态页面
+app.use('/static', express.static(config.staticPath))
 
 // 设置生产环境的 离线包管理页面的反向代理。
 app.use('/offlinePack', proxy({

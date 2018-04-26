@@ -8,5 +8,9 @@ module.exports = {
   dynamicRouterAdminServer: 'http://localhost:2676/admin', // 生产环境的动态路由的服务地址,用于反向代理访问。
   offlineAppId: 'xxapp', // 离线包使用的APPID
   appName: 'MyAPP', // 应用展示名称。
-  gitUrl: ''
+  gitUrl: '',
+  jenkinsURL: 'http://jenkins.luoxianming.cn', // jeninsURL
+  jenkinsUser: 'luoxianming',
+  jenkinsPassword: 'q981932962',
+  jenkinsModuleManagerJobName: 'DemoModuleImport', // jenkins中， 负责app的模块管理的任务名称， 对接管理平台的接入管理。
 }

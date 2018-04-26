@@ -2,8 +2,8 @@ const appDAO = require('../dao').appDAO
 const timelineDAO = require('../dao').timelineDAO
 const dateFormat = require('dateformat')
 // const config = require('../config')
-const Promise = require('bluebird')
 const conf = require('../conf')
+const moduleDAO = require('../dao').moduleDAO
 
 // 添加事件
 function addTimeLineAction (action) {
@@ -42,16 +42,12 @@ function deleteTimeLineAction (actionId) {
   return timelineDAO.retrieveTimelineAction(actionId).then((timelineInfo) => {
     if (timelineInfo) {
       if (timelineInfo.type !== conf.TIMELINE_ACTION_TYPE_USERSET) {
-        return new Promise((resolve, reject) => {
-          reject(new Error('默认事件不能删除 ！！！'))
-        })
+        return Promise.reject(new Error('默认事件不能删除 ！！！'))
       } else {
         return timelineDAO.deleteTimeLineAction(actionId)
       }
     } else {
-      return new Promise((resolve, reject) => {
-        reject(new Error('当前事件 ' + actionId + ' 并不存在！！！'))
-      })
+      return Promise.reject(new Error('当前事件 ' + actionId + ' 并不存在！！！'))
     }
   })
 }
@@ -71,19 +67,21 @@ function getTimelineInfo (timelineId) {
   }).then(appVersionInfo => {
     if (appVersionInfo) {
       ret['appVersionInfo'] = appVersionInfo
-      // 然后检测是否要查询模块信息。
       if (ret.timelineInfo.type === conf.TIMELINE_TYPE_MODULE) {
-        // TODO
-      } else {
-        return new Promise((resolve, reject) => {
-          resolve(ret)
+        // 对于模块类型，还要额外查模块的信息以及 APP版本的事件。
+        return moduleDAO.getModuleVersionInfoById(ret.timelineInfo.moduleVersionId).then(moduleVersionInfo => {
+          ret['moduleVersionInfo'] = moduleVersionInfo
+          return timelineDAO.retrieveTimeLineInfo(ret.appVersionInfo.timelineId)
+        }).then(timelineInfo => {
+          ret['appTimelineInfo'] = timelineInfo
+          return ret
         })
+      } else {
+        return ret
       }
     } else {
       // 查不到APP信息，表示异常
-      return new Promise((resolve, reject) => {
-        reject(new Error('查询timeline信息发生未知异常 !!'))
-      })
+      return Promise.reject(new Error('查询timeline信息发生未知异常 !!'))
     }
   })
 }
@@ -99,22 +97,16 @@ function finishTimelineAction (detail, actionId) {
       return timelineDAO.retrieveTimeLineInfo(timelineAction.lineId)
     } else {
       // 不存在时，返回异常
-      return new Promise((resolve, reject) => {
-        reject(new Error('未找到该事件！！！'))
-      })
+      return Promise.reject(new Error('未找到该事件！！！'))
     }
   }).then(timelineInfo => {
     // 获取全部的事件信息，以进行类型检测。
     // 事件检测只有三个， 已完成的项目不能完成，  开始任务必须要要求状态是未开始， 任务要求之前的任务都完成。
     if (actionInfo.status === conf.TIMELINE_ACTION_STATUS_FINISHED) {
-      return new Promise((resolve, reject) => {
-        reject(new Error('事件已完成！！！'))
-      })
+      return Promise.reject(new Error('事件已完成！！！'))
     } else if (actionInfo.type === conf.TIMELINE_ACTION_TYPE_START &&
        timelineInfo.timelineInfo.status !== conf.TIMELINE_STATUS_WAITING) {
-      return new Promise((resolve, reject) => {
-        reject(new Error('项目已开始，不能再设置开始任务！！！'))
-      })
+      return Promise.reject(new Error('项目已开始，不能再设置开始任务！！！'))
     } else {
       // 检测事件顺序。
       for (let index in timelineInfo.actionList) {
@@ -124,9 +116,7 @@ function finishTimelineAction (detail, actionId) {
           break
         } else {
           if (action.status !== conf.TIMELINE_ACTION_STATUS_FINISHED) {
-            return new Promise((resolve, reject) => {
-              reject(new Error('需要完成前置的事件！！！'))
-            })
+            return Promise.reject(new Error('需要完成前置的事件！！！'))
           }
         }
       }
@@ -140,8 +130,8 @@ function finishTimelineAction (detail, actionId) {
       actionType: actionInfo.type,
       timelineType: timelineInfo.timelineInfo.type, // app 还是 module
       timelineId: timelineInfo.timelineInfo.timelineId,
-      appVersionId: timelineInfo.timelineInfo.appVersionId
-      // moduleVersionId: ... moduleId.
+      appVersionId: timelineInfo.timelineInfo.appVersionId,
+      moduleVersionId: timelineInfo.timelineInfo.moduleVersionId
     })
   })
 }

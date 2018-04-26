@@ -1,36 +1,23 @@
-const sqlite3 = require('sqlite3')
+const sqlite = require('sqlite')
 const path = require('path')
 const config = require('../../config')
-const fs = require('fs')
 const transaction = require('./transaction')
 
 const userDAO = require('./user')
 const appDAO = require('./app')
 const timelineDAO = require('./timeline')
+const moduleDAO = require('./module')
 // 初始化数据库。
 function initDB () {
-  return new Promise((resolve, reject) => {
-    let file = path.join(config.workPath, 'db.sqlite3')
-    let mode = !fs.existsSync(file)
-      ? sqlite3.OPEN_READWRITE | sqlite3.OPEN_CREATE
-      : sqlite3.OPEN_READWRITE
-    console.log('连接数据库')
-    let db = new sqlite3.Database(file, mode, (err) => {
-      if (err) {
-        reject(err)
-      } else {
-        userDAO.initDB(db).then(() => {
-          return appDAO.initDB(db)
-        }).then(() => {
-          return timelineDAO.initDB(db)
-        }).catch((err) => {
-          reject(err)
-        }).then(() => {
-          transaction(file)
-          resolve()
-        })
-      }
-    })
+  let file = path.join(config.workPath, 'db.sqlite3')
+  let db
+  return sqlite.open(file, {Promise}).then(ret => {
+    db = ret
+    return db.exec('PRAGMA foreign_keys = ON') // 需要手动打开外键
+  }).then(db => {
+    return Promise.all([userDAO.initDB(db), appDAO.initDB(db), timelineDAO.initDB(db), moduleDAO.initDB(db)])
+  }).then(() => {
+    transaction(file)
   })
 }
 
@@ -38,5 +25,6 @@ module.exports = {
   initDB: initDB,
   userDAO: userDAO,
   appDAO: appDAO,
-  timelineDAO: timelineDAO
+  timelineDAO: timelineDAO,
+  moduleDAO: moduleDAO
 }

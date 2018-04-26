@@ -25,6 +25,7 @@ function getAPPVersionsByPage (req, res) {
   if (pageNum === undefined) {
     return res.json({error: '参数传递错误！'})
   }
+  pageNum = parseInt(pageNum)
   // 查询数据库。
   appService.getAPPVersionsByPage(pageNum).then((data) => {
     res.json(data)
@@ -99,7 +100,7 @@ function getVersionInfo (req, res) {
 }
 
 function dispatchApp (app) {
-  app.get('/app/goingon', getOngoingAppVersions)
+  app.get('/app/ongoing', getOngoingAppVersions)
   app.get('/app/versions', getAPPVersionsByPage)
   app.post('/app/create', createAPPVersion)
   app.post('/app/delete', deleteAPPVersion)

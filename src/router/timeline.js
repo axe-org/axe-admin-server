@@ -1,4 +1,5 @@
 const timelineService = require('../service/timeline')
+const moduleService = require('../service/module')
 const conf = require('../conf')
 
 // 添加事件
@@ -16,6 +17,7 @@ function addTimeLineAction (req, res) {
   if (lineId === undefined || expectedTime === undefined || title === undefined || detail === undefined) {
     return res.json({error: '参数传入错误！！'})
   }
+  lineId = parseInt(lineId)
   timelineService.getTimeline(lineId).then(timelineInfo => {
     // 需要检测用户是否是 app或者模块管理员。
     if (timelineInfo.type === conf.TIMELINE_TYPE_APP) {
@@ -24,8 +26,22 @@ function addTimeLineAction (req, res) {
         return res.json({error: '当前用户 ' + req.session.userInfo.userName + ' 没有APP管理员权限!!'})
       }
     } else {
-      // TODO模块权限检测。
-      return res.json({error: '当前用户 ' + req.session.userInfo.userName + ' 没有模块的管理权限!!'})
+      let moduleId = req.body.moduleId
+      if (moduleId === undefined) {
+        return res.json({error: '参数传入错误！！'})
+      }
+      moduleId = parseInt(moduleId)
+      let admin = false
+      let moduleList = req.session.userInfo.moduleList
+      moduleList.forEach(module => {
+        if (module.id === moduleId) {
+          admin = true
+        }
+      })
+      if (!admin) {
+        return res.json({error: '用户没有该模块的管理权限，不能进行相关管理操作！！！'})
+      }
+      moduleService.updateModuleOperationTime(moduleId)
     }
     timelineService.addTimeLineAction({
       lineId: lineId,
@@ -54,6 +70,8 @@ function deleteTimeLineAction (req, res) {
   if (actionId === undefined || lineId === undefined) {
     return res.json({error: '参数传入错误！！'})
   }
+  actionId = parseInt(actionId)
+  lineId = parseInt(lineId)
   timelineService.getTimeline(lineId).then(timelineInfo => {
     // 需要检测用户是否是 app或者模块管理员。
     if (timelineInfo.type === conf.TIMELINE_TYPE_APP) {
@@ -62,8 +80,22 @@ function deleteTimeLineAction (req, res) {
         return res.json({error: '当前用户 ' + req.session.userInfo.userName + ' 没有APP管理员权限!!'})
       }
     } else {
-      // TODO模块权限检测。
-      return res.json({error: '当前用户 ' + req.session.userInfo.userName + ' 没有模块的管理权限!!'})
+      let moduleId = req.body.moduleId
+      if (moduleId === undefined) {
+        return res.json({error: '参数传入错误！！'})
+      }
+      moduleId = parseInt(moduleId)
+      let admin = false
+      let moduleList = req.session.userInfo.moduleList
+      moduleList.forEach(module => {
+        if (module.id === moduleId) {
+          admin = true
+        }
+      })
+      if (!admin) {
+        return res.json({error: '用户没有该模块的管理权限，不能进行相关管理操作！！！'})
+      }
+      moduleService.updateModuleOperationTime(moduleId)
     }
     timelineService.deleteTimeLineAction(actionId).then(() => {
       res.json({})
@@ -85,6 +117,7 @@ function getTimelineInfo (req, res) {
   if (lineId === undefined) {
     return res.json({error: '参数传入错误！！'})
   }
+  lineId = parseInt(lineId)
   timelineService.getTimelineInfo(lineId).then(timelineInfo => {
     res.json(timelineInfo)
   }).catch(err => {
@@ -106,6 +139,8 @@ function addDetailDescToAction (req, res) {
   if (actionId === undefined || lineId === undefined || detail === undefined) {
     return res.json({error: '参数传入错误！！'})
   }
+  actionId = parseInt(actionId)
+  lineId = parseInt(lineId)
   timelineService.getTimeline(lineId).then(timelineInfo => {
     // 需要检测用户是否是 app或者模块管理员。
     if (timelineInfo.type === conf.TIMELINE_TYPE_APP) {
@@ -114,8 +149,22 @@ function addDetailDescToAction (req, res) {
         return res.json({error: '当前用户 ' + req.session.userInfo.userName + ' 没有APP管理员权限!!'})
       }
     } else {
-      // TODO模块权限检测。
-      return res.json({error: '当前用户 ' + req.session.userInfo.userName + ' 没有模块的管理权限!!'})
+      let moduleId = req.body.moduleId
+      if (moduleId === undefined) {
+        return res.json({error: '参数传入错误！！'})
+      }
+      moduleId = parseInt(moduleId)
+      let admin = false
+      let moduleList = req.session.userInfo.moduleList
+      moduleList.forEach(module => {
+        if (module.id === moduleId) {
+          admin = true
+        }
+      })
+      if (!admin) {
+        return res.json({error: '用户没有该模块的管理权限，不能进行相关管理操作！！！'})
+      }
+      moduleService.updateModuleOperationTime(moduleId)
     }
     timelineService.addDetailDescToAction(detail, actionId).then(() => {
       res.json({})
@@ -141,6 +190,8 @@ function finishTimelineAction (req, res) {
   if (actionId === undefined || lineId === undefined || detail === undefined) {
     return res.json({error: '参数传入错误！！'})
   }
+  actionId = parseInt(actionId)
+  lineId = parseInt(lineId)
   timelineService.getTimeline(lineId).then(timelineInfo => {
     // 需要检测用户是否是 app或者模块管理员。
     if (timelineInfo.type === conf.TIMELINE_TYPE_APP) {
@@ -149,8 +200,22 @@ function finishTimelineAction (req, res) {
         return res.json({error: '当前用户 ' + req.session.userInfo.userName + ' 没有APP管理员权限!!'})
       }
     } else {
-      // TODO模块权限检测。
-      return res.json({error: '当前用户 ' + req.session.userInfo.userName + ' 没有模块的管理权限!!'})
+      let moduleId = req.body.moduleId
+      if (moduleId === undefined) {
+        return res.json({error: '参数传入错误！！'})
+      }
+      moduleId = parseInt(moduleId)
+      let admin = false
+      let moduleList = req.session.userInfo.moduleList
+      moduleList.forEach(module => {
+        if (module.id === moduleId) {
+          admin = true
+        }
+      })
+      if (!admin) {
+        return res.json({error: '用户没有该模块的管理权限，不能进行相关管理操作！！！'})
+      }
+      moduleService.updateModuleOperationTime(moduleId)
     }
     timelineService.finishTimelineAction(detail, actionId).then(() => {
       res.json({})

@@ -1,6 +1,5 @@
 // action 表， 记录系统中所有用户的操作。不包括动态路由和离线包
 // action 实际就是最后展示给用户的一些通知。
-const Promise = require('bluebird')
 let db
 // 初始化与建表操作。
 function initDB (_db) {
@@ -32,7 +31,6 @@ function initDB (_db) {
         // module_id 设置module_id ,为了做外键，进行联动删除
         db.run(`CREATE TABLE IF NOT EXISTS user_group (
           user_id INTEGER NOT NULL,
-          module_name VARCHAR(30) NOT NULL,
           module_id INTEGER NOT NULL,
           FOREIGN KEY(user_id) REFERENCES user(id) ON DELETE CASCADE
         )`, (err) => {
@@ -48,6 +46,5 @@ function initDB (_db) {
 }
 
 module.exports = {
-  initDB: initDB,
-  freshUser: freshUser
+  initDB: initDB
 }
