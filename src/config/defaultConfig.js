@@ -10,7 +10,7 @@ module.exports = {
   appName: 'MyAPP', // 应用展示名称。
   gitUrl: '',
   jenkinsURL: 'http://jenkins.luoxianming.cn', // jeninsURL
-  jenkinsUser: 'luoxianming',
-  jenkinsPassword: 'q981932962',
+  jenkinsUser: 'xxxxx',
+  jenkinsPassword: 'xxxxx',
   jenkinsModuleImportJobName: 'DemoModuleImport', // jenkins中， 负责app的模块管理的任务名称， 对接管理平台的接入管理。
 }
