@@ -6,6 +6,7 @@ const fs = require('fs')
 const path = require('path')
 const md5 = require('md5')
 const moduleDAO = require('../dao').moduleDAO
+const importDAO = require('../dao').importDAO
 let jenkinsURL = new URL(config.jenkinsURL)
 jenkinsURL.username = config.jenkinsUser
 jenkinsURL.password = config.jenkinsPassword
@@ -114,7 +115,7 @@ function submitJenkinsBuildResult (buildId) {
   let workspaceURL = `${jenkinsURL}/job/${buildInfo.jobName}/ws/build/`
   if (buildInfo.status === conf.JENKINS_JOB_BUILD_STATUS_SUCCESS) {
     // 成功， 处理api文件，以及依赖图
-    if (buildInfo.moduleId && buildInfo.publish) {
+    if (buildInfo.buildType === conf.JENKINS_BUILD_TYPE_MODULE_BUILD && buildInfo.publish) {
       // 如果是模块构建
       let modulePath = path.join(config.modulePath, String(buildInfo.versionId))
       if (!fs.existsSync(modulePath)) {
@@ -137,16 +138,37 @@ function submitJenkinsBuildResult (buildId) {
           moduleDAO.updateVersionWithSuccessBuild(buildInfo.versionId, newVersion, released)
         }
       })
-    } else {
-      // TODO app 模块管理。
+    } else if (buildInfo.buildType === conf.JENKINS_BUILD_TYPE_MODULE_IMPORT) {
+      // app 模块管理。 管理成功后， 修改数据。
+      let importList = buildInfo.importList
+      importList.forEach(importInfo => {
+        importInfo.handleUser = buildInfo.handleUser
+        importInfo.status = conf.MODUEL_IMPORT_STATUS_SUCCESS
+      })
+      importDAO.handleImport(importList).catch(err => {
+        // 这里不应该出现数据库错误。
+        console.log('使用 importDAO 处理接入结果失败 ：')
+        console.log(err)
+      })
+      // TODO APP结构图 绘制与处理。
     }
   } else {
     // 其他都视为失败。
-    if (buildInfo.moduleId) {
+    if (buildInfo.buildType === conf.JENKINS_BUILD_TYPE_MODULE_BUILD) {
       // 如果是模块构建
       moduleDAO.updateVersionWithFailedBuild(buildInfo.versionId)
-    } else {
-      // TODO app 模块管理。
+    } else if (buildInfo.buildType === conf.JENKINS_BUILD_TYPE_MODULE_IMPORT) {
+      // app 模块管理。
+      let importList = buildInfo.importList
+      importList.forEach(importInfo => {
+        importInfo.handleUser = buildInfo.handleUser
+        importInfo.status = conf.MODULE_IMPORT_STATUS_FAILED
+      })
+      importDAO.handleImport(importList).catch(err => {
+        // 这里不应该出现数据库错误。
+        console.log('使用 importDAO 处理接入结果失败 ：')
+        console.log(err)
+      })
     }
   }
   // 清理内容。
@@ -208,15 +230,29 @@ function buildModule (moduleInfo) {
     moduleId: moduleInfo.moduleId,
     versionId: moduleInfo.versionId,
     publish: moduleInfo.parameters.PUBLISH,
-    released: moduleInfo.parameters.RELEASED
+    released: moduleInfo.parameters.RELEASED,
+    buildType: conf.JENKINS_BUILD_TYPE_MODULE_BUILD
   })
 }
 
 // 这里只处理模块接入， 不处理模块的清理。
-// versionId app版本号
-// moduleList [{"moduleName":"moduleVersion"}]
-function handlerModuleImport (versionId, moduleList) {
-
+// 传入参数 importList [{importId , name, version}]
+function handleModuleImport (appVersion, importList, handleUser) {
+  // 组装jenkins使用的参数，  {APP_VERSION : '1.0.0' , IMPORT_MODULES: {'moduleA': '1.1.1'}}
+  let importModuels = {}
+  let jenkinsParams = {
+    APP_VERSION: appVersion
+  }
+  importList.forEach(module => {
+    importModuels[module.name] = module.version
+  })
+  jenkinsParams['IMPORT_MODULES'] = JSON.stringify(importModuels)
+  return buildJenkinsJob(config.jenkinsModuleImportJobName, jenkinsParams, {
+    importList: importList,
+    appVersion: appVersion,
+    handleUser: handleUser,
+    buildType: conf.JENKINS_BUILD_TYPE_MODULE_IMPORT
+  })
 }
 
 // 根据buildId 来检测状态。
@@ -235,6 +271,6 @@ module.exports = {
   checkJenkinsJobExists: checkJenkinsJobExists,
   checkJenkinsJobStatus: checkJenkinsJobStatus,
   buildModule: buildModule,
-  handlerModuleImport: handlerModuleImport,
+  handleModuleImport: handleModuleImport,
   checkBuildStatus: checkBuildStatus
 }

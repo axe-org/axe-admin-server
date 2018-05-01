@@ -320,11 +320,6 @@ function updateVersionChangeLog (versionId, changeLog) {
   return db.run(`UPDATE module_version SET change_log = ? WHERE id = ?`, [changeLog, versionId])
 }
 
-// 变更模块接入状态
-function updateVersionImportedStatus (moduleId, version) {
-
-}
-
 // 在构建失败后， 更新这里的统计信息， 参数为 versionId
 function updateVersionWithFailedBuild (versionId) {
   return db.run(`UPDATE module_version SET build_failed = build_failed + 1 , build_count = build_count + 1

@@ -1,4 +1,5 @@
 const moduleService = require('../service/module')
+const userService = require('../service/user')
 
 // 创建模块
 function createModule (req, res) {
@@ -26,6 +27,16 @@ function createModule (req, res) {
     gitType: gitType,
     userId: req.session.userInfo.userId
   }).then((module) => {
+    // 刷新 session 信息。
+    userService.logIn(req.session.userInfo.userName, req.session.userInfo.password).then(userInfo => {
+      // 创建session
+      // res.generated
+      req.session.regenerate(function (err) {
+        if (!err) {
+          req.session.userInfo = Object.assign({}, userInfo)
+        }
+      })
+    })
     res.json({moduleId: module.moduleId})
   }).catch(err => {
     res.json({error: err.message})
@@ -172,7 +183,7 @@ function submitModuleVersion (req, res) {
     }
   })
   if (!admin) {
-    return res.json({error: '当前用户没有该模块的权限，不能进行删除操作'})
+    return res.json({error: '当前用户没有该模块的权限，不能进行创建版本操作'})
   }
   moduleService.createModuleVersion(req.body).then(versionId => {
     res.json({versionId: versionId})

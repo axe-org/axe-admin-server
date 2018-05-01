@@ -13,14 +13,15 @@ function createModule (moduleInfo) {
     }
   }).then(() => moduleDAO.createModule(moduleInfo)).then((ret) => {
     // 创建成功后，要将创建用户id设置为该模块的管理员。
-    userDAO.addGroupInfo({
+    return userDAO.addGroupInfo({
       userId: moduleInfo.userId,
       moduleName: moduleInfo.name,
       moduleId: ret.moduleId
     }).catch(err => {
       console.log('TODO 创建模块时，应该用事务, 添加模块管理权限失败 :' + err.message)
+    }).then(() => {
+      return ret
     })
-    return ret
   })
 }
 

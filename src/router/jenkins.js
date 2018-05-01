@@ -1,8 +1,42 @@
 const jenkinsService = require('../service/jenkins')
+const config = require('../config')
 
 // 检测模块接入管理构建任务的状态
-function checkModuleManagerJobStatus (req, res) {
-
+function importModule (req, res) {
+  let login = !!req.session.userInfo
+  if (!login) {
+    return res.json({error: '未登录'})
+  }
+  if (!req.session.userInfo.appAdmin) {
+    return res.json({error: '当前用户没有APP管理权限！！！'})
+  }
+  let appVersion = req.body.appVersion
+  // 结构为 [{importId , name, version}]
+  let importList = req.body.importList
+  if (importList === undefined || appVersion === undefined) {
+    return res.json({error: '参数传递错误！！'})
+  }
+  jenkinsService.handleModuleImport(appVersion, importList, req.session.userInfo.userName).then(data => {
+    res.json(data)
+  }).catch(err => {
+    res.json({error: err.message})
+  })
+}
+// 检测接入jenkins任务当前状态。
+function checkModuleImportJobStatus (req, res) {
+  let login = !!req.session.userInfo
+  if (!login) {
+    return res.json({error: '未登录'})
+  }
+  if (!req.session.userInfo.appAdmin) {
+    return res.json({error: '当前用户没有APP管理权限！！！'})
+  }
+  let importJobName = config.jenkinsModuleImportJobName
+  jenkinsService.checkJenkinsJobStatus(importJobName).then(data => {
+    res.json(data)
+  }).catch(err => {
+    res.json({error: err.message})
+  })
 }
 
 // 检查模块构建任务的状态
@@ -90,6 +124,8 @@ function dispatchJenkinsRouter (app) {
   app.post('/jenkins/module/status', checkModuleBuildJobStatus)
   app.post('/jenkins/module/build', moduleBuild)
   app.get('/jenkins/build', checkJenkinsBuildStatus)
+  app.get('/jenkins/import/status', checkModuleImportJobStatus)
+  app.post('/jenkins/import/build', importModule)
 }
 
 module.exports = dispatchJenkinsRouter
