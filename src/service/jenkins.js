@@ -123,7 +123,7 @@ function submitJenkinsBuildResult (buildId) {
       }
       let dependencySVGPath = path.join(modulePath, 'dependency.svg')
       let APIFilePath = path.join(modulePath, 'API.h')
-      request(workspaceURL + `dependency.svg`).pipe(fs.createWriteStream(dependencySVGPath))
+      request(`${jenkinsURL}/job/${buildInfo.jobName}/ws/axe/dependency.svg`).pipe(fs.createWriteStream(dependencySVGPath))
       request(workspaceURL + `API.h`).pipe(fs.createWriteStream(APIFilePath))
       request(workspaceURL + 'version.txt', function (error, response, body) {
         if (error) {
@@ -143,14 +143,20 @@ function submitJenkinsBuildResult (buildId) {
       let importList = buildInfo.importList
       importList.forEach(importInfo => {
         importInfo.handleUser = buildInfo.handleUser
-        importInfo.status = conf.MODUEL_IMPORT_STATUS_SUCCESS
+        importInfo.status = conf.MODULE_IMPORT_STATUS_SUCCESS
       })
       importDAO.handleImport(importList).catch(err => {
         // 这里不应该出现数据库错误。
         console.log('使用 importDAO 处理接入结果失败 ：')
         console.log(err)
       })
-      // TODO APP结构图 绘制与处理。
+      // APP结构图 绘制与处理的下载保存
+      let appVersionPath = path.join(config.appPath, buildInfo.appVersion)
+      if (!fs.existsSync(appVersionPath)) {
+        fs.mkdirSync(appVersionPath)
+      }
+      let dependencySVGPath = path.join(appVersionPath, 'dependency.svg')
+      request(`${jenkinsURL}/job/${buildInfo.jobName}/ws/axe/dependency.svg`).pipe(fs.createWriteStream(dependencySVGPath))
     }
   } else {
     // 其他都视为失败。
@@ -236,17 +242,17 @@ function buildModule (moduleInfo) {
 }
 
 // 这里只处理模块接入， 不处理模块的清理。
-// 传入参数 importList [{importId , name, version}]
+// 传入参数 importList [{importId , name, version, moduleVersionId}]
 function handleModuleImport (appVersion, importList, handleUser) {
   // 组装jenkins使用的参数，  {APP_VERSION : '1.0.0' , IMPORT_MODULES: {'moduleA': '1.1.1'}}
-  let importModuels = {}
+  let importModules = {}
   let jenkinsParams = {
     APP_VERSION: appVersion
   }
   importList.forEach(module => {
-    importModuels[module.name] = module.version
+    importModules[module.name] = module.version
   })
-  jenkinsParams['IMPORT_MODULES'] = JSON.stringify(importModuels)
+  jenkinsParams['IMPORT_MODULES'] = JSON.stringify(importModules)
   return buildJenkinsJob(config.jenkinsModuleImportJobName, jenkinsParams, {
     importList: importList,
     appVersion: appVersion,

@@ -46,8 +46,14 @@ function getImportRecordList (appVersion, module, pageNum) {
   return importDAO.getImportRecordList(query)
 }
 
+// 拒绝单独的一个引入
+function rejectImport (importId, handleUser, note) {
+  return importDAO.rejectImport(importId, handleUser, note)
+}
+
 module.exports = {
   applyImportModule: applyImportModule,
   getWaitingImportList: getWaitingImportList,
-  getImportRecordList: getImportRecordList
+  getImportRecordList: getImportRecordList,
+  rejectImport: rejectImport
 }

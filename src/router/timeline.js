@@ -1,7 +1,7 @@
 const timelineService = require('../service/timeline')
 const moduleService = require('../service/module')
 const conf = require('../conf')
-
+const config = require('../config')
 // 添加事件
 function addTimeLineAction (req, res) {
   // 这里做安全检测，即每次先检测用户是否登录
@@ -108,9 +108,11 @@ function deleteTimeLineAction (req, res) {
 }
 
 function getTimelineInfo (req, res) {
-  let login = !!req.session.userInfo
-  if (!login) {
-    return res.json({error: '未登录'})
+  if (!config.guestMode) {
+    let login = !!req.session.userInfo
+    if (!login) {
+      return res.json({error: '未登录'})
+    }
   }
   // 参数检测
   let lineId = req.body.lineId
@@ -228,11 +230,11 @@ function finishTimelineAction (req, res) {
 }
 
 function dispatchTimeline (app) {
-  app.post('/timeline/add', addTimeLineAction)
-  app.post('/timeline/delete', deleteTimeLineAction)
-  app.post('/timeline/info', getTimelineInfo)
-  app.post('/timeline/addDetail', addDetailDescToAction)
-  app.post('/timeline/finish', finishTimelineAction)
+  app.post('/api/timeline/add', addTimeLineAction)
+  app.post('/api/timeline/delete', deleteTimeLineAction)
+  app.post('/api/timeline/info', getTimelineInfo)
+  app.post('/api/timeline/addDetail', addDetailDescToAction)
+  app.post('/api/timeline/finish', finishTimelineAction)
 }
 
 module.exports = dispatchTimeline

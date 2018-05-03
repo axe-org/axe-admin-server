@@ -1,5 +1,5 @@
 const importService = require('../service/import')
-
+const config = require('../config')
 // 提交接入申请
 function applyImportModule (req, res) {
   let login = !!req.session.userInfo
@@ -34,9 +34,11 @@ function applyImportModule (req, res) {
 }
 
 function getWaitingImportList (req, res) {
-  let login = !!req.session.userInfo
-  if (!login) {
-    return res.json({error: '未登录'})
+  if (!config.guestMode) {
+    let login = !!req.session.userInfo
+    if (!login) {
+      return res.json({error: '未登录'})
+    }
   }
   let appVersion = req.query.appVersion
   if (appVersion === undefined) {
@@ -50,9 +52,11 @@ function getWaitingImportList (req, res) {
 }
 
 function getImportRecordList (req, res) {
-  let login = !!req.session.userInfo
-  if (!login) {
-    return res.json({error: '未登录'})
+  if (!config.guestMode) {
+    let login = !!req.session.userInfo
+    if (!login) {
+      return res.json({error: '未登录'})
+    }
   }
   let appVersion = req.query.appVersion
   let module = req.query.module
@@ -68,10 +72,35 @@ function getImportRecordList (req, res) {
   })
 }
 
+// 拒绝一个引入请求
+function rejectImport (req, res) {
+  let login = !!req.session.userInfo
+  if (!login) {
+    return res.json({error: '未登录'})
+  }
+  // 需要APP 管理员权限
+  if (!req.session.userInfo.appAdmin) {
+    return res.json({error: '当前用户没有APP管理权限！！！'})
+  }
+  let importId = req.body.importId
+  let note = req.body.note
+  if (importId === undefined || note === undefined) {
+    return res.json({error: '参数传递错误！！！'})
+  }
+  importId = parseInt(importId)
+  let handleUser = req.session.userInfo.userName
+  importService.rejectImport(importId, handleUser, note).then(() => {
+    res.json({})
+  }).catch(err => {
+    res.json({error: err.message})
+  })
+}
+
 function dispatchImportRouter (app) {
-  app.post('/import/apply', applyImportModule)
-  app.get('/import/waiting', getWaitingImportList)
-  app.get('/import/records', getImportRecordList)
+  app.post('/api/import/apply', applyImportModule)
+  app.get('/api/import/waiting', getWaitingImportList)
+  app.get('/api/import/records', getImportRecordList)
+  app.post('/api/import/reject', rejectImport)
 }
 
 module.exports = dispatchImportRouter

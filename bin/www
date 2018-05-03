@@ -21,7 +21,7 @@ const cors = require('cors')
 const userSevice = require('../src/service/user')
 const dao = require('../src/dao')
 const express = require('express')
-const proxy = require('http-proxy-middleware')
+// const proxy = require('http-proxy-middleware')
 // const easyMonitor = require('easy-monitor');
 // easyMonitor('你的项目名称');
 // const jenkins = require('../src/service/jenkins')
@@ -43,22 +43,12 @@ app.use(bodyParser.json())
 // 跨域问题解决
 app.use(cors({credentials: true, origin: config.corsOrigin}))
 
-console.log(config.staticPath)
 // 两个文件夹的静态页面
-app.use('/static', express.static(config.staticPath))
-
-// 设置生产环境的 离线包管理页面的反向代理。
-app.use('/offlinePack', proxy({
-  target: config.offlinePackAdminServer,
-  pathRewrite: {
-    '^/offlinePack': ''
-  },
-  changeOrigin: true
-}))
+app.use('/api/static', express.static(config.staticPath))
 
 // 设置session和cookie
 app.use(session({
-  secret: 'keyboard cat',
+  secret: 'axe-admin',
   resave: false,
   saveUninitialized: false,
   cookie: { maxAge: 2 * 30 * 24 * 60 * 60 * 1000 }// 设置超时时间两个月。
@@ -66,12 +56,6 @@ app.use(session({
 
 const dispatchRouter = require('../src/router')
 dispatchRouter(app)
-// TODO 这里设置反向代理规则。
-// const adminWebPath = path.join(config.serverPath, 'static')
-// app.use(adminRouter.path, express.static(adminWebPath))
-// if (config.local) {
-//   app.use(config.local.publicPath, express.static(config.local.storageDir))
-// }
 
 let port = config.port
 

@@ -1,6 +1,6 @@
 const moduleService = require('../service/module')
 const userService = require('../service/user')
-
+const config = require('../config')
 // 创建模块
 function createModule (req, res) {
   // 权限是已登录即可。
@@ -28,15 +28,12 @@ function createModule (req, res) {
     userId: req.session.userInfo.userId
   }).then((module) => {
     // 刷新 session 信息。
-    userService.logIn(req.session.userInfo.userName, req.session.userInfo.password).then(userInfo => {
-      // 创建session
-      // res.generated
-      req.session.regenerate(function (err) {
-        if (!err) {
-          req.session.userInfo = Object.assign({}, userInfo)
-        }
+    setTimeout(() => {
+      userService.logIn(req.session.userInfo.userName, req.session.userInfo.password).then(userInfo => {
+        req.session.userInfo = userInfo
+        req.session.save()
       })
-    })
+    }, 1000)
     res.json({moduleId: module.moduleId})
   }).catch(err => {
     res.json({error: err.message})
@@ -71,9 +68,11 @@ function deleteModule (req, res) {
 }
 
 function getModuleInfo (req, res) {
-  let login = !!req.session.userInfo
-  if (!login) {
-    return res.json({error: '未登录'})
+  if (!config.guestMode) {
+    let login = !!req.session.userInfo
+    if (!login) {
+      return res.json({error: '未登录'})
+    }
   }
   let moduleId = req.query.moduleId
   if (moduleId === undefined) {
@@ -88,9 +87,11 @@ function getModuleInfo (req, res) {
 }
 
 function getModuleList (req, res) {
-  let login = !!req.session.userInfo
-  if (!login) {
-    return res.json({error: '未登录'})
+  if (!config.guestMode) {
+    let login = !!req.session.userInfo
+    if (!login) {
+      return res.json({error: '未登录'})
+    }
   }
   let query = {}
   query['name'] = req.body.name
@@ -112,9 +113,11 @@ function getModuleList (req, res) {
 
 // 获取模块的 管理员用户相关信息。
 function getModuleAdminUserInfo (req, res) {
-  let login = !!req.session.userInfo
-  if (!login) {
-    return res.json({error: '未登录'})
+  if (!config.guestMode) {
+    let login = !!req.session.userInfo
+    if (!login) {
+      return res.json({error: '未登录'})
+    }
   }
   let moduleId = req.query.moduleId
   if (moduleId === undefined) {
@@ -223,9 +226,11 @@ function deleteModuleVersion (req, res) {
 }
 
 function getModuleVersionList (req, res) {
-  let login = !!req.session.userInfo
-  if (!login) {
-    return res.json({error: '未登录'})
+  if (!config.guestMode) {
+    let login = !!req.session.userInfo
+    if (!login) {
+      return res.json({error: '未登录'})
+    }
   }
   let moduleId = req.body.moduleId
   let pageNum = req.body.pageNum
@@ -242,9 +247,11 @@ function getModuleVersionList (req, res) {
 }
 
 function getModuleVersion (req, res) {
-  let login = !!req.session.userInfo
-  if (!login) {
-    return res.json({error: '未登录'})
+  if (!config.guestMode) {
+    let login = !!req.session.userInfo
+    if (!login) {
+      return res.json({error: '未登录'})
+    }
   }
   let moduleId = req.body.moduleId
   let version = req.body.version
@@ -291,17 +298,17 @@ function updateVersionChangeLog (req, res) {
 }
 
 function dispatchModule (app) {
-  app.post('/module/create', createModule)
-  app.post('/module/delete', deleteModule)
-  app.get('/module/info', getModuleInfo)
-  app.post('/module/list', getModuleList)
-  app.get('/module/admin/list', getModuleAdminUserInfo)
-  app.post('/module/admin/change', submitModuleAdminChange)
-  app.post('/module/version/create', submitModuleVersion)
-  app.post('/module/version/delete', deleteModuleVersion)
-  app.post('/module/version/list', getModuleVersionList)
-  app.post('/module/version/info', getModuleVersion)
-  app.post('/module/version/changelog', updateVersionChangeLog)
+  app.post('/api/module/create', createModule)
+  app.post('/api/module/delete', deleteModule)
+  app.get('/api/module/info', getModuleInfo)
+  app.post('/api/module/list', getModuleList)
+  app.get('/api/module/admin/list', getModuleAdminUserInfo)
+  app.post('/api/module/admin/change', submitModuleAdminChange)
+  app.post('/api/module/version/create', submitModuleVersion)
+  app.post('/api/module/version/delete', deleteModuleVersion)
+  app.post('/api/module/version/list', getModuleVersionList)
+  app.post('/api/module/version/info', getModuleVersion)
+  app.post('/api/module/version/changelog', updateVersionChangeLog)
 }
 
 module.exports = dispatchModule

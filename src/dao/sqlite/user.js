@@ -3,7 +3,6 @@ const transaction = require('./transaction')
 let db
 // 初始化与建表操作。
 function initDB (_db) {
-  console.log(_db)
   db = _db
   // 建立用户信息表。表结构
   // name为用户名，用于登录
@@ -123,7 +122,7 @@ function getbatchUserGroupsInfo (userIdList) {
       }
     })
     rows.forEach(function (row) {
-      ret[row.user_id].moduleList.push(row.module_name)
+      ret[row.user_id].moduleList.push(row.name)
     })
     return ret
   })

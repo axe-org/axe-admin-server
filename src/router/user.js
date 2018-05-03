@@ -1,9 +1,6 @@
 // router层， 检测输入以及异常处理。
-const NodeCache = require('node-cache')
-// 本地缓存，暂时没有失效时间，通过通知进行清空操作。
-const localCache = new NodeCache({checkperiod: 0})
 const userService = require('../service/user')
-
+const config = require('../config')
 // 登录
 function logIn (req, res) {
   // console.log('配置新包 :', JSON.stringify(req.body))
@@ -78,13 +75,15 @@ function checkSession (req, res) {
 // 分页查询用户列表。
 function queryUserList (req, res) {
   // 这里做安全检测，即每次先检测用户是否登录，且是否有权限。
-  let login = !!req.session.userInfo
-  if (!login) {
-    return res.json({error: '未登录'})
-  }
-  let userAdmin = req.session.userInfo.userAdmin
-  if (!userAdmin) {
-    return res.json({error: '当前用户 ' + req.session.userInfo.userName + ' 没有用户管理员权限!!'})
+  if (!config.guestMode) {
+    let login = !!req.session.userInfo
+    if (!login) {
+      return res.json({error: '未登录'})
+    }
+    let userAdmin = req.session.userInfo.userAdmin
+    if (!userAdmin) {
+      return res.json({error: '当前用户 ' + req.session.userInfo.userName + ' 没有用户管理员权限!!'})
+    }
   }
   // 查询数据库。
   userService.queryUsersList(req.query.pageNum).then((data) => {
@@ -158,13 +157,13 @@ function setUserPermission (req, res) {
 }
 
 function dispatchUser (app) {
-  app.post('/user/logIn', logIn)
-  app.post('/user/logOut', logOut)
-  app.post('/user/check', checkSession)
-  app.get('/user/list', queryUserList)
-  app.post('/user/add', addUser)
-  app.post('/user/resetPassword', resetUserPassword)
-  app.post('/user/setPermission', setUserPermission)
+  app.post('/api/user/logIn', logIn)
+  app.post('/api/user/logOut', logOut)
+  app.post('/api/user/check', checkSession)
+  app.get('/api/user/list', queryUserList)
+  app.post('/api/user/add', addUser)
+  app.post('/api/user/resetPassword', resetUserPassword)
+  app.post('/api/user/setPermission', setUserPermission)
 }
 
 module.exports = dispatchUser

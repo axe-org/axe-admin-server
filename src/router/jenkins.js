@@ -121,11 +121,11 @@ function checkJenkinsBuildStatus (req, res) {
 }
 
 function dispatchJenkinsRouter (app) {
-  app.post('/jenkins/module/status', checkModuleBuildJobStatus)
-  app.post('/jenkins/module/build', moduleBuild)
-  app.get('/jenkins/build', checkJenkinsBuildStatus)
-  app.get('/jenkins/import/status', checkModuleImportJobStatus)
-  app.post('/jenkins/import/build', importModule)
+  app.post('/api/jenkins/module/status', checkModuleBuildJobStatus)
+  app.post('/api/jenkins/module/build', moduleBuild)
+  app.get('/api/jenkins/build', checkJenkinsBuildStatus)
+  app.get('/api/jenkins/import/status', checkModuleImportJobStatus)
+  app.post('/api/jenkins/import/build', importModule)
 }
 
 module.exports = dispatchJenkinsRouter

@@ -1,11 +1,14 @@
 const appService = require('../service/app')
+const config = require('../config')
 
 // 查询当前进行中的APP版本列表
 function getOngoingAppVersions (req, res) {
   // 这里做安全检测，即每次先检测用户是否登录
-  let login = !!req.session.userInfo
-  if (!login) {
-    return res.json({error: '未登录'})
+  if (!config.guestMode) {
+    let login = !!req.session.userInfo
+    if (!login) {
+      return res.json({error: '未登录'})
+    }
   }
   // 查询数据库。
   appService.getOngoingAppVersions().then((data) => {
@@ -15,19 +18,23 @@ function getOngoingAppVersions (req, res) {
   })
 }
 
-function getAPPVersionsByPage (req, res) {
+function getAPPVersionInfoList (req, res) {
   // 这里做安全检测，即每次先检测用户是否登录，且是否有权限。
-  let login = !!req.session.userInfo
-  if (!login) {
-    return res.json({error: '未登录'})
+  if (!config.guestMode) {
+    let login = !!req.session.userInfo
+    if (!login) {
+      return res.json({error: '未登录'})
+    }
   }
+  let ongoing = req.query.ongoing
   let pageNum = req.query.pageNum
-  if (pageNum === undefined) {
+  if (pageNum === undefined || ongoing === undefined) {
     return res.json({error: '参数传递错误！'})
   }
+  ongoing = parseInt(ongoing)
   pageNum = parseInt(pageNum)
   // 查询数据库。
-  appService.getAPPVersionsByPage(pageNum).then((data) => {
+  appService.getAPPVersionsByPage(ongoing, pageNum).then((data) => {
     res.json(data)
   }).catch(err => {
     res.json({error: err.message})
@@ -79,9 +86,11 @@ function deleteAPPVersion (req, res) {
 }
 
 function getVersionInfo (req, res) {
-  let login = !!req.session.userInfo
-  if (!login) {
-    return res.json({error: '未登录'})
+  if (!config.guestMode) {
+    let login = !!req.session.userInfo
+    if (!login) {
+      return res.json({error: '未登录'})
+    }
   }
   let version = req.query.version
   if (version === undefined) {
@@ -89,22 +98,40 @@ function getVersionInfo (req, res) {
   }
   // 查询数据库。
   appService.getVersionInfo(version).then((data) => {
-    if (data) {
-      res.json(data)
-    } else {
-      res.json({error: '当前没有版本 ' + version})
-    }
+    res.json(data)
+  }).catch(err => {
+    res.json({error: err.message})
+  })
+}
+
+// 手动刷新app结构图
+function manualReloadStructureImage (req, res) {
+  let login = !!req.session.userInfo
+  if (!login) {
+    return res.json({error: '未登录'})
+  }
+  let appAdmin = req.session.userInfo.appAdmin
+  if (!appAdmin) {
+    return res.json({error: '当前用户 ' + req.session.userInfo.userName + ' 没有APP管理员权限!!'})
+  }
+  let version = req.body.version
+  if (version === undefined) {
+    return res.json({error: '参数传递错误！'})
+  }
+  appService.manualRefreshAPPStructureImage(version).then(() => {
+    res.json({})
   }).catch(err => {
     res.json({error: err.message})
   })
 }
 
 function dispatchApp (app) {
-  app.get('/app/ongoing', getOngoingAppVersions)
-  app.get('/app/versions', getAPPVersionsByPage)
-  app.post('/app/create', createAPPVersion)
-  app.post('/app/delete', deleteAPPVersion)
-  app.get('/app/version', getVersionInfo)
+  app.get('/api/app/ongoing', getOngoingAppVersions)
+  app.get('/api/app/list', getAPPVersionInfoList)
+  app.post('/api/app/create', createAPPVersion)
+  app.post('/api/app/delete', deleteAPPVersion)
+  app.get('/api/app/version', getVersionInfo)
+  app.post('/api/app/reloadStruct', manualReloadStructureImage)
 }
 
 module.exports = dispatchApp

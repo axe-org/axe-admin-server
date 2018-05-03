@@ -18,7 +18,7 @@ function createModule (moduleInfo) {
       moduleName: moduleInfo.name,
       moduleId: ret.moduleId
     }).catch(err => {
-      console.log('TODO 创建模块时，应该用事务, 添加模块管理权限失败 :' + err.message)
+      console.log('创建模块时，应该用事务, 添加模块管理权限失败 :' + err.message)
     }).then(() => {
       return ret
     })
@@ -97,9 +97,10 @@ function createModuleVersion (versionInfo) {
       actions: versionInfo.actions,
       moduleVersionId: versionId
     })
-  }).then(ret =>
-    moduleDAO.addTimelineIDForVersion(versionId, ret.timelineId)
-  ).catch(err => {
+  }).then(ret => {
+    moduleDAO.updateModuleOperationTime(versionInfo.moduleId)
+    return moduleDAO.addTimelineIDForVersion(versionId, ret.timelineId)
+  }).catch(err => {
     console.log('创建模块版本失败！！！')
     console.log(err)
     if (versionId) {
@@ -112,6 +113,7 @@ function createModuleVersion (versionInfo) {
 // 删除模块版本， 同时删除timeline,因为timeline没有外键
 function deleteModuleVersion (versionId) {
   return moduleDAO.getModuleVersionInfoById(versionId).then((moduleVersionInfo) => {
+    moduleDAO.updateModuleOperationTime(moduleVersionInfo.moduleId)
     return Promise.all([moduleDAO.deleteModuleVersion(versionId), timelineDAO.deleteTimeline(moduleVersionInfo.timelineId)])
   })
 }

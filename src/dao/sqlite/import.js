@@ -11,6 +11,12 @@ function initDB (_db) {
   // module : 模块名
   // module_id : 模块id
   // module_version : 新的模块版本。
+  // applicant 申请人
+  // apply_time 申请时间
+  // status 状态
+  // note 备注
+  // handle_user 处理人
+  // handle_time 处理时间
   return db.run(`CREATE TABLE IF NOT EXISTS import (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     app_version VARCHAR(30) NOT NULL,
@@ -40,12 +46,18 @@ function handleImport (importList) {
       tr.run(`UPDATE import SET status = ? , handle_user = ? , handle_time = DATETIME('now','localtime') WHERE id = ?`,
         [moduleImport.status, moduleImport.handleUser, moduleImport.importId])
       // 同时修改模块版本的接入状态。
-      if (moduleImport.status === conf.MODUEL_IMPORT_STATUS_SUCCESS) {
+      if (moduleImport.status === conf.MODULE_IMPORT_STATUS_SUCCESS) {
         tr.run(`UPDATE module_version SET imported = 1 WHERE id = ?`, moduleImport.moduleVersionId)
       }
     })
     return tr.commit()
   })
+}
+
+// 拒绝模块接入，一次只能处理一个模块
+function rejectImport (importId, handleUser, note) {
+  return db.run(`UPDATE import SET status = ? , handle_user = ? , note = ? , handle_time = DATETIME('now','localtime') WHERE id = ?`,
+    [conf.MODULE_IMPORT_STATUS_REJECT, handleUser, note, importId])
 }
 
 // 没有删除操作。
@@ -69,7 +81,7 @@ function getWaitingImportList (appVersion) {
         status: row.status,
         note: row.note,
         handleUser: row.handle_user,
-        handleTime: row.handleTime
+        handleTime: row.handle_time
       })
     })
     return list
@@ -108,7 +120,7 @@ function getImportRecordList (query) {
         status: row.status,
         note: row.note,
         handleUser: row.handle_user,
-        handleTime: row.handleTime
+        handleTime: row.handle_time
       })
     })
     ret['importList'] = list
@@ -139,7 +151,7 @@ function getImportRecord (appVersion, moduleVersionId) {
         status: row.status,
         note: row.note,
         handleUser: row.handle_user,
-        handleTime: row.handleTime
+        handleTime: row.handle_time
       }
     }
   })
@@ -151,5 +163,6 @@ module.exports = {
   handleImport: handleImport,
   getWaitingImportList: getWaitingImportList,
   getImportRecordList: getImportRecordList,
-  getImportRecord: getImportRecord
+  getImportRecord: getImportRecord,
+  rejectImport: rejectImport
 }

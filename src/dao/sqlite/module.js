@@ -155,8 +155,8 @@ function getModuleInfo (moduleId) {
   }).then(() =>
     // 获取最新的prd版本号
     db.get(`SELECT * FROM module_version WHERE module_id = ? AND version_code = 
-      (SELECT MAX(version_code) FROM module_version WHERE released = ? AND module_id = ?)`,
-    [moduleInfo.moduleId, 1, moduleInfo.moduleId])
+      (SELECT MAX(version_code) FROM module_version WHERE released = 1 AND module_id = ?)`,
+    [moduleInfo.moduleId, moduleInfo.moduleId])
   ).then((row) => {
     if (row) {
       moduleInfo['maxPrdVersion'] = row.version
@@ -261,21 +261,21 @@ function getModuleList (query) {
         })
       }).then(() =>
         // 获取最新prd版本号
-        db.all(`SELECT module_id, version, MAX(version_code) FROM module_version GROUP BY module_id HAVING module_id IN ${moduleLimitStr} `)
+        db.all(`SELECT module_id, version, MAX(version_code) FROM (SELECT * FROM module_version WHERE module_id IN ${moduleLimitStr} AND released = 1) GROUP BY module_id`)
       ).then(rows => {
         let maxPrdVersionMap = {}
         rows.forEach(row => {
           maxPrdVersionMap[row.module_id] = row.version
         })
         data['moduleList'].forEach(moduleInfo => {
-          moduleInfo['maxPrdVersion'] = maxPrdVersionMap[moduleInfo.module_id]
+          moduleInfo['maxPrdVersion'] = maxPrdVersionMap[moduleInfo.moduleId]
         })
       })
     }
   }).then(() => Promise.resolve(data))
 }
 
-// 在每个模块操作完成后，更新模块的操作时间。 操作时间用于列表排序模块。 TODO 确保主要操作都会调用这个函数。
+// 在每个模块操作完成后，更新模块的操作时间。 操作时间用于列表排序模块
 function updateModuleOperationTime (moduleId) {
   return db.run(`UPDATE module SET operation_time = DATETIME('now','localtime') WHERE id = ?`, [moduleId])
 }
