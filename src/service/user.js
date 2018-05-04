@@ -1,7 +1,6 @@
 // service层做具体业务。
 const userDAO = require('../dao').userDAO
 const config = require('../config')
-const conf = require('../conf')
 const md5 = require('md5')
 // 初始化设置的管理信息
 function initSettingAdmin () {
@@ -56,6 +55,11 @@ function logIn (userName, password) {
         }
       }
     }).then((groupsInfo) => {
+      // 对于管理员用户，下发授权信息
+      if (user.appAdmin) {
+        user['dynamicServerAccessControlPath'] = config.dynamicServerAccessControlPath
+        user['offlineServerAccessControlPath'] = config.offlineServerAccessControlPath
+      }
       resolve(Object.assign(groupsInfo, user))
     }).catch(err => {
       reject(err)

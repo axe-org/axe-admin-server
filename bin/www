@@ -17,7 +17,6 @@ let binPath = __dirname // 可执行文件目录
 config.initConfig(binPath, workPath)
 
 const session = require('express-session')
-const cors = require('cors')
 const userSevice = require('../src/service/user')
 const dao = require('../src/dao')
 const express = require('express')
@@ -40,9 +39,6 @@ const bodyParser = require('body-parser')
 app.use(bodyParser.urlencoded({extended: false}))
 app.use(bodyParser.json())
 
-// 跨域问题解决
-app.use(cors({credentials: true, origin: config.corsOrigin}))
-
 // 两个文件夹的静态页面
 app.use('/api/static', express.static(config.staticPath))
 
@@ -58,6 +54,9 @@ const dispatchRouter = require('../src/router')
 dispatchRouter(app)
 
 let port = config.port
+if (!port) {
+  port = 2678
+}
 
 let server = app.listen(port, function () {
   let host = server.address().address

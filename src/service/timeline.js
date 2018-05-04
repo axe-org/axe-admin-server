@@ -1,7 +1,6 @@
 const appDAO = require('../dao').appDAO
 const timelineDAO = require('../dao').timelineDAO
 const dateFormat = require('dateformat')
-// const config = require('../config')
 const conf = require('../conf')
 const moduleDAO = require('../dao').moduleDAO
 

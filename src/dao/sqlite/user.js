@@ -62,7 +62,7 @@ function getUserInfo (userName) {
 
 // 返回值， 为userID.
 function insertUser (userInfo) {
-  return db.run(`INSERT INTO user VALUES (NULL, ? , NULL , ? , ? , ? ,DATETIME('now','localtime'))`).then(stmt => {
+  return db.run(`INSERT INTO user VALUES (NULL, ? , NULL , ? , ? , ? ,DATETIME('now','localtime'))`, [userInfo.name, userInfo.password, userInfo.userAdmin ? 1 : 0, userInfo.appAdmin ? 1 : 0]).then(stmt => {
     return stmt.lastID
   })
 }

@@ -1,8 +1,11 @@
 {
-  "name": "axe-admin",
+  "name": "axe-admin-server",
   "version": "0.0.1",
   "description": "Admin server for Axe to optimization the process of application development",
   "main": "index.js",
+  "bin": {
+    "axe-admin-server": "./bin/www"
+  },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node ./bin/www"
@@ -23,11 +26,9 @@
   "dependencies": {
     "body-parser": "^1.18.2",
     "cookie-parser": "^1.4.3",
-    "cors": "^2.8.4",
     "dateformat": "^3.0.3",
     "express": "^4.16.3",
     "express-session": "^1.15.6",
-    "http-proxy-middleware": "^0.18.0",
     "jenkins": "^0.20.1",
     "md5": "^2.2.1",
     "node-cache": "^4.2.0",
@@ -37,6 +38,8 @@
   "devDependencies": {
     "eslint": "^4.19.1",
     "eslint-config-standard": "^11.0.0",
+    "eslint-plugin-import": "^2.11.0",
+    "eslint-plugin-node": "^6.0.1",
     "eslint-plugin-promise": "^3.7.0",
     "eslint-plugin-standard": "^3.0.1"
   }
