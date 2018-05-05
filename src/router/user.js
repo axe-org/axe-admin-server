@@ -128,7 +128,7 @@ function resetUserPassword (req, res) {
   if (req.body.userId === undefined || req.body.password === undefined) {
     return res.json({error: '参数输入错误 ！！！'})
   }
-  userService.changeUserInfo({password: req.body.password, userId: req.body.userId}).then(() => {
+  userService.resetPassword({password: req.body.password, userId: req.body.userId}).then(() => {
     res.json({})
   }).catch(err => {
     res.json({error: err.message})

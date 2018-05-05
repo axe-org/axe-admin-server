@@ -1,6 +1,6 @@
 {
   "name": "axe-admin-server",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Admin server for Axe to optimization the process of application development",
   "main": "index.js",
   "bin": {
