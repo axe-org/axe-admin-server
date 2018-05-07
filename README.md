@@ -8,11 +8,11 @@ axe-admin node server
 
 手动安装 ：
 
-  npm install axe-admin-server -g
+    npm install axe-admin-server -g
 
 启动
 
-  axe-admin-server /path/to/save/data
+    axe-admin-server /path/to/save/data
 
 ## 配置介绍
 
