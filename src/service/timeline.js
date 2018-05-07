@@ -85,8 +85,7 @@ function getTimelineInfo (timelineId) {
   })
 }
 
-// 完成事件。 完成后会返回getTimelineInfo 的详细数据，以刷新前端状态。
-// 同时检测事件类型，特殊类型修改APP状态。或者模块状态。
+// 完成事件。 检测事件类型，特殊类型修改APP状态。或者模块状态。
 function finishTimelineAction (detail, actionId) {
   let actionInfo
   return timelineDAO.retrieveTimelineAction(actionId).then(timelineAction => {
@@ -100,7 +99,7 @@ function finishTimelineAction (detail, actionId) {
     }
   }).then(timelineInfo => {
     // 获取全部的事件信息，以进行类型检测。
-    // 事件检测只有三个， 已完成的项目不能完成，  开始任务必须要要求状态是未开始， 任务要求之前的任务都完成。
+    // 事件检测有三个规则， 已完成的项目不能完成，  开始任务必须要要求状态是未开始， 任务要求之前的任务都完成。
     if (actionInfo.status === conf.TIMELINE_ACTION_STATUS_FINISHED) {
       return Promise.reject(new Error('事件已完成！！！'))
     } else if (actionInfo.type === conf.TIMELINE_ACTION_TYPE_START &&

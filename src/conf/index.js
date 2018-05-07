@@ -1,3 +1,7 @@
+// 开发总结之： 前后端传递的常量，还是应该以字符串的格式，而不是数值常量。
+// 1. 字符串清晰明了
+// 2. 避免 常量放到get请求的URL里，然后读取时要做额外的类型转换。
+// TODO暂时就不优化了，留个坑吧
 module.exports = Object.freeze({
   TIMELINE_STATUS_WAITING: 1,
   TIMELINE_STATUS_DOING: 0,

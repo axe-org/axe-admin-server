@@ -94,7 +94,6 @@ function manualRefreshAPPStructureImage (version) {
     }
     let remoteURL = config.appGitHome
     if (config.appGitType === 'github') {
-      // https://raw.githubusercontent.com/axe-org/demo-app/master/LICENSE
       let split = remoteURL.split('/')
       let userName = split[split.length - 2]
       let repository = split[split.length - 1]

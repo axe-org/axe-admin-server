@@ -3,15 +3,10 @@ const userService = require('../service/user')
 const config = require('../config')
 // 登录
 function logIn (req, res) {
-  // console.log('配置新包 :', JSON.stringify(req.body))
-  // req.body.name
   let userName = req.body.userName
   let password = req.body.password
-  if (!userName || !password) {
-    return res.json({
-      error:
-        '参数传入错误'
-    })
+  if (userName === undefined || password === undefined) {
+    return res.json({error: '参数传入错误'})
   }
   // 检测数据库
   userService.logIn(userName, password).then(userInfo => {
@@ -86,7 +81,7 @@ function queryUserList (req, res) {
     }
   }
   // 查询数据库。
-  userService.queryUsersList(req.query.pageNum).then((data) => {
+  userService.queryUsersList(parseInt(req.query.pageNum)).then((data) => {
     res.json(data)
   }).catch(err => {
     res.json({error: err.message})
@@ -128,7 +123,7 @@ function resetUserPassword (req, res) {
   if (req.body.userId === undefined || req.body.password === undefined) {
     return res.json({error: '参数输入错误 ！！！'})
   }
-  userService.resetPassword({password: req.body.password, userId: req.body.userId}).then(() => {
+  userService.resetPassword({password: req.body.password, userId: parseInt(req.body.userId)}).then(() => {
     res.json({})
   }).catch(err => {
     res.json({error: err.message})
@@ -149,7 +144,7 @@ function setUserPermission (req, res) {
   if (req.body.userId === undefined || req.body.appAdmin === undefined || req.body.userAdmin === undefined) {
     return res.json({error: '参数输入错误 ！！！'})
   }
-  userService.setPermission(req.body.userId, req.body.userAdmin, req.body.appAdmin).then(() => {
+  userService.setPermission(parseInt(req.body.userId), req.body.userAdmin, req.body.appAdmin).then(() => {
     res.json({})
   }).catch(err => {
     res.json({error: err.message})

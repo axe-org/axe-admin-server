@@ -20,10 +20,6 @@ const session = require('express-session')
 const userSevice = require('../src/service/user')
 const dao = require('../src/dao')
 const express = require('express')
-// const proxy = require('http-proxy-middleware')
-// const easyMonitor = require('easy-monitor');
-// easyMonitor('你的项目名称');
-// const jenkins = require('../src/service/jenkins')
 // 初始化
 dao.initDB()
   .then(userSevice.initSettingAdmin)

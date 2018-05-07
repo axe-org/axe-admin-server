@@ -22,12 +22,11 @@ function initDB (_db) {
     // 创建 时间事件表
     // id 自增主键
     // line_id 为时间线ID， 外键
-    // type ，0 表示默认 ， 1 表示用户添加 ， 之后加其他类型， 默认的不能删除。
+    // type ，TIMELINE_ACTION_TYPE， 用户设置的可以删除，默认的不能删除。
     // expected_time , 预期完成时间
     // status , 当前状态 0 表示未完成， 1 表示已完成
     // title ， 标题 ，简要说明
     // detail , 详细说明 ， 提供一部分说明，用户可以修改以加上具体实施细节
-    // logs , 日志说明， 记录用户操作， 如 xxx创建了事件，xxx修改了事件，xxx完成了事件等等。 暂时不添加。之后考虑日志数据库。
     // finished_time , 实际操作时间
     return db.run(`CREATE TABLE IF NOT EXISTS timeline_action (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -72,7 +71,7 @@ function updateTimelineStatus (timeLineId, status) {
   return db.run(`UPDATE timeline SET status = ? WHERE id = ?`, [status, timeLineId])
 }
 
-// 查，按照需求来， 暂时无需求，不查。
+// 查，由APP或者Module来负责查询。
 
 // 添加时间事件
 function createTimeLineAction (action) {
@@ -149,7 +148,9 @@ function retrieveTimeLineInfo (timelineId) {
         finishedTime: row.finished_time
       })
     })
-  }).then(() => db.get('SELECT * FROM timeline WHERE id = ?', [timelineId])).then(row => {
+  }).then(() =>
+    db.get('SELECT * FROM timeline WHERE id = ?', [timelineId])
+  ).then(row => {
     if (!row) {
       return Promise.reject(new Error('查询 timeline 发生未知异常！！！'))
     } else {

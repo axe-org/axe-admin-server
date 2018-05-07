@@ -33,8 +33,7 @@ function checkJenkinsJobExists (jobName) {
 // 本地记录一下 jenkins构建和版本的对应信息。
 let jenkinsBuildMaps = {}
 
-// 检测jenkins任务状态， 返回数据 { building: 如果当前构建中，则返回buildNumber, 前端提示以查看构建进度,
-//                              jobFree: 是否空闲
+// 检测jenkins任务状态， 返回数据 { jobFree: 是否空闲
 //                              nextbuildNumber: 下一个构建的版本号  }
 function checkJenkinsJobStatus (jobName) {
   return checkJenkinsJobExists(jobName).then(() =>
@@ -45,6 +44,7 @@ function checkJenkinsJobStatus (jobName) {
         } else {
           let nextBuildNumber = data.nextBuildNumber
           if (data.lastBuild) {
+            // 检测是否由构建正在执行。
             let lastBuildNum = data.lastBuild.number
             jenkins.build.get(jobName, lastBuildNum, (err, data) => {
               if (err) {
@@ -112,7 +112,7 @@ function watchJenkinsBuilding (buildId) {
 // 在jenkins成功或失败后， 处理结果。
 function submitJenkinsBuildResult (buildId) {
   let buildInfo = jenkinsBuildMaps[buildId]
-  let workspaceURL = `${jenkinsURL}/job/${buildInfo.jobName}/ws/build/`
+  let workspaceURL = `${jenkinsURL}/job/${buildInfo.jobName}/ws`
   if (buildInfo.status === conf.JENKINS_JOB_BUILD_STATUS_SUCCESS) {
     // 成功， 处理api文件，以及依赖图
     if (buildInfo.buildType === conf.JENKINS_BUILD_TYPE_MODULE_BUILD && buildInfo.publish) {
@@ -123,9 +123,17 @@ function submitJenkinsBuildResult (buildId) {
       }
       let dependencySVGPath = path.join(modulePath, 'dependency.svg')
       let APIFilePath = path.join(modulePath, 'API.h')
-      request(`${jenkinsURL}/job/${buildInfo.jobName}/ws/axe/dependency.svg`).pipe(fs.createWriteStream(dependencySVGPath))
-      request(workspaceURL + `API.h`).pipe(fs.createWriteStream(APIFilePath))
-      request(workspaceURL + 'version.txt', function (error, response, body) {
+      request(workspaceURL + `/axe/dependency.svg`).on('response', res => {
+        if (res.statusCode === 200) {
+          res.pipe(fs.createWriteStream(dependencySVGPath))
+        }
+      })
+      request(workspaceURL + `/build/API.h`).on('response', res => {
+        if (res.statusCode === 200) {
+          res.pipe(fs.createWriteStream(APIFilePath))
+        }
+      })
+      request(workspaceURL + '/build/version.txt', function (error, response, body) {
         if (error) {
           console.log('下载失败， 版本构建失败！！！')
           buildInfo.status = conf.JENKINS_JOB_BUILD_STATUS_FAILURE
@@ -156,7 +164,11 @@ function submitJenkinsBuildResult (buildId) {
         fs.mkdirSync(appVersionPath)
       }
       let dependencySVGPath = path.join(appVersionPath, 'dependency.svg')
-      request(`${jenkinsURL}/job/${buildInfo.jobName}/ws/axe/dependency.svg`).pipe(fs.createWriteStream(dependencySVGPath))
+      request(workspaceURL + `/axe/dependency.svg`).on('response', res => {
+        if (res.statusCode === 200) {
+          res.pipe(fs.createWriteStream(dependencySVGPath))
+        }
+      })
     }
   } else {
     // 其他都视为失败。

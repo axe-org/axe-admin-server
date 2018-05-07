@@ -1,3 +1,4 @@
+// 开发总结之 - SQL语句要使用参数化查询
 const sqlite = require('sqlite')
 const path = require('path')
 const config = require('../../config')

@@ -10,7 +10,6 @@ function initDB (_db) {
   // status 状态  0 进行中  ，1 未开始， ，2已完成
   // timeline_id 时间线id , 这个不设置外建。
   // created_time 创建时间
-  // 对于未开始的APP版本，可以进行删除。
   return db.run(`CREATE TABLE IF NOT EXISTS app_version (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     version VARCHAR(30) NOT NULL UNIQUE,
@@ -37,7 +36,7 @@ function getVersionInfo (versionInfo) {
   })
 }
 
-// 添加新app版本 ， 要先检测有没有版本
+// 添加新app版本 ， 要先检测有没有版本, 返回主键ID。
 function addVersion (versionInfo) {
   return db.run(`INSERT INTO app_version VALUES (NULL, ? , ? , ? , DATETIME('now','localtime') , NULL )`,
     [versionInfo.version, versionInfo.versionCode, versionInfo.status]).then(stmt => {
@@ -77,31 +76,7 @@ function getOngoingAppVersions () {
   })
 }
 
-// // 获取全部APP版本列表， 进行分页处理。 而且进行排序， 先进行中的，再未开始的，然后才是已经完成的，且版本号由高到低。
-// function getAppVersionsByPage (pageNum, pageCount) {
-//   let array = []
-//   return db.all('SELECT * FROM app_version ORDER BY status ASC , version_code DESC LIMIT ? OFFSET ?',
-//     [pageCount, pageCount * pageNum]).then(rows => {
-//     rows.forEach(function (row) {
-//       array.push({
-//         versionId: row.id,
-//         version: row.version,
-//         versionCode: row.version_code,
-//         status: row.status,
-//         timelineId: row.timeline_id
-//       })
-//     })
-//   }).then(() => db.get('SELECT count(*) FROM app_version ')).then(row => {
-//     let count = row['count(*)']
-//     return {
-//       versionList: array,
-//       pageCount: parseInt(count / 12) + 1
-//     }
-//   })
-// }
-
 // 获取详细的APP信息
-// TODO dao层，只能处理自己数据的数据， 多余的操作放在service中进行 ?
 function getAPPVersionDetailInfo (moduleVersion) {
   let data = {}
   return db.get(`SELECT * FROM app_version WHERE version = ?;`, [moduleVersion]).then(row => {
@@ -254,7 +229,6 @@ module.exports = {
   addVersion: addVersion,
   deleteVersion: deleteVersion,
   getOngoingAppVersions: getOngoingAppVersions,
-  // getAppVersionsByPage: getAppVersionsByPage,
   setVersionTimeLine: setVersionTimeLine,
   getAPPVersionDetailInfo: getAPPVersionDetailInfo,
   getAPPVersionDetailInfoList: getAPPVersionDetailInfoList

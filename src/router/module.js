@@ -28,13 +28,14 @@ function createModule (req, res) {
     userId: req.session.userInfo.userId
   }).then((module) => {
     // 刷新 session 信息。
+    userService.logIn(req.session.userInfo.userName, req.session.userInfo.password).then(userInfo => {
+      req.session.userInfo = userInfo
+      req.session.save()
+    })
+    // 由于创建模块，要赋予用户新的模块管理权限，所以要刷新一下session ，这里先刷新session， 再前端加载页面。
     setTimeout(() => {
-      userService.logIn(req.session.userInfo.userName, req.session.userInfo.password).then(userInfo => {
-        req.session.userInfo = userInfo
-        req.session.save()
-      })
-    }, 1000)
-    res.json({moduleId: module.moduleId})
+      res.json({moduleId: module.moduleId})
+    }, 1500)
   }).catch(err => {
     res.json({error: err.message})
   })
@@ -188,7 +189,13 @@ function submitModuleVersion (req, res) {
   if (!admin) {
     return res.json({error: '当前用户没有该模块的权限，不能进行创建版本操作'})
   }
-  moduleService.createModuleVersion(req.body).then(versionId => {
+  moduleService.createModuleVersion({
+    moduleId: moduleId,
+    appVersionId: appVersionId,
+    version: version,
+    changeLog: changeLog,
+    actions: actions
+  }).then(versionId => {
     res.json({versionId: versionId})
   }).catch(err => {
     res.json({error: err.message})

@@ -35,22 +35,22 @@ function transaction (filename) {
           })
         },
         commit: function () {
-          // 这个sql语句本事是不可能出错的。。。
+          // 这个sql语句是不可能出错的。。。
           return db.run(`SELECT sqlite_version();`).then(() => {
             if (error) {
               // 如果有错误，则回滚
-              db.exec('ROLLBACK;').catch(err => {
-                console.log('事务回滚失败 : ' + err.message)
+              db.exec('ROLLBACK;').then(() => {
                 db.close()
-              }).then(() => {
+              }).catch(err => {
+                console.log('事务回滚失败 : ' + err.message)
                 db.close()
               })
               return Promise.reject(error)
             } else {
-              return db.exec('COMMIT;').catch(err => {
-                console.log('事物提交失败 ： ' + err.message)
+              return db.exec('COMMIT;').then(() => {
                 db.close()
-              }).then(() => {
+              }).catch(err => {
+                console.log('事物提交失败 ： ' + err.message)
                 db.close()
               })
             }
@@ -58,49 +58,6 @@ function transaction (filename) {
         }
       }
     })
-
-    // let db = sqlite.open(dbFile, {Promise})
-    // let error
-    // return {
-    //   serialize: function (callback) {
-    //     return db.serialize(callback)
-    //   },
-    //   begin: function () {
-    //     return db.exec('BEGIN EXCLUSIVE;')
-    //   },
-    //   exec: function (sql, args) {
-    //     return db.exec(sql, args).catch(err => {
-    //       error = err
-    //     })
-    //   },
-    //   run: function (sql, args) {
-    //     return db.run(sql, args).cathc(err => {
-    //       error = err
-    //     })
-    //   },
-    //   commit: function (callback) {
-    //     // 这个sql语句本事是不可能出错的。。。
-    //     return db.run(`SELECT sqlite_version();`).then(() => {
-    //       if (error) {
-    //         // 如果有错误，则回归
-    //         db.exec('ROLLBACK;').catch(err => {
-    //           console.log('事务回滚失败 : ' + err.message)
-    //           db.close()
-    //         }).then(() => {
-    //           db.close()
-    //         })
-    //         return Promise.reject(error)
-    //       } else {
-    //         return db.exec('COMMIT;').catch(err => {
-    //           console.log('事物提交失败 ： ' + err.message)
-    //           db.close()
-    //         }).then(() => {
-    //           db.close()
-    //         })
-    //       }
-    //     })
-    //   }
-    // }
   }
 }
 

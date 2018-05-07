@@ -29,7 +29,7 @@ function deleteModule (moduleId) {
   // 删除时，需要确保 模块当前没有版本存在
   return moduleDAO.getModuleInfo(moduleId).then(moduleInfo => {
     if (moduleInfo['versionCount'] > 0) {
-      return Promise.reject(new Error('当前设定，已有版本模块不能删除！！'))
+      return Promise.reject(new Error('该模块现在有版本，不能进行删除！！'))
     }
   }).then(() => moduleDAO.deleteModule(moduleId))
 }

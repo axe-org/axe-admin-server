@@ -20,14 +20,14 @@ function initDB (_db) {
     app_admin INT(1) NOT NULL,
     last_active DATETIME NOT NULL
   )`).then(() =>
-    // 创建用户分组表， 用于确定用户分组信息
-    // userid 为用户id
-    // module_name ，当为模块管理的类型时，指向模块ID。 module 改为使用name做唯一区分，方便查询。
-    // module_id 设置module_id ,为了做外键，进行联动删除
+    // 创建用户分组, 只做模块权限分组记录。
+    // user_id 为用户id
+    // module_id 设置module_id
     db.run(`CREATE TABLE IF NOT EXISTS user_group (
     user_id INTEGER NOT NULL,
     module_id INTEGER NOT NULL,
-    FOREIGN KEY(user_id) REFERENCES user(id) ON DELETE CASCADE
+    FOREIGN KEY(user_id) REFERENCES user(id) ON DELETE CASCADE,
+    FOREIGN KEY(module_id) REFERENCES module(id) ON DELETE CASCADE
   )`))
 }
 
@@ -62,7 +62,8 @@ function getUserInfo (userName) {
 
 // 返回值， 为userID.
 function insertUser (userInfo) {
-  return db.run(`INSERT INTO user VALUES (NULL, ? , NULL , ? , ? , ? ,DATETIME('now','localtime'))`, [userInfo.name, userInfo.password, userInfo.userAdmin ? 1 : 0, userInfo.appAdmin ? 1 : 0]).then(stmt => {
+  return db.run(`INSERT INTO user VALUES (NULL, ? , NULL , ? , ? , ? ,DATETIME('now','localtime'))`,
+    [userInfo.name, userInfo.password, userInfo.userAdmin ? 1 : 0, userInfo.appAdmin ? 1 : 0]).then(stmt => {
     return stmt.lastID
   })
 }
@@ -89,9 +90,9 @@ function getUserGroups (userId) {
 
 // 分页查询用户信息, 返回结果是 分页数据， 以及 总页数。
 // 这里的页数是从0 开始的。
-function getUsersByPage (pageNum, pageCount) {
+function getUsersByPage (pageNum, pageSize) {
   let array = []
-  return db.all('SELECT * FROM user LIMIT ? OFFSET ?', [pageCount, pageCount * pageNum]).then(rows => {
+  return db.all('SELECT * FROM user LIMIT ? OFFSET ?', [pageSize, pageSize * pageNum]).then(rows => {
     rows.forEach(function (row) {
       array.push({
         userId: row.id,
@@ -106,11 +107,12 @@ function getUsersByPage (pageNum, pageCount) {
     let count = row['count(*)']
     return {
       usersInfo: array,
-      pageCount: parseInt(count / 12) + 1
+      pageCount: parseInt(count / pageSize) + 1
     }
   })
 }
 
+// 这里要确保 userIdList 是 数字数组，不是字符串数组。
 function getbatchUserGroupsInfo (userIdList) {
   let inList = '(' + userIdList.join(',') + ')'
   return db.all(`SELECT module_id, name, user_id FROM ( SELECT * FROM user_group WHERE user_id IN ${inList} )

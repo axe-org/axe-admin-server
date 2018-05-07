@@ -1,7 +1,7 @@
 const jenkinsService = require('../service/jenkins')
 const config = require('../config')
 
-// 检测模块接入管理构建任务的状态
+// 处理模块接入
 function importModule (req, res) {
   let login = !!req.session.userInfo
   if (!login) {
@@ -24,12 +24,14 @@ function importModule (req, res) {
 }
 // 检测接入jenkins任务当前状态。
 function checkModuleImportJobStatus (req, res) {
-  let login = !!req.session.userInfo
-  if (!login) {
-    return res.json({error: '未登录'})
-  }
-  if (!req.session.userInfo.appAdmin) {
-    return res.json({error: '当前用户没有APP管理权限！！！'})
+  if (!config.guestMode) {
+    let login = !!req.session.userInfo
+    if (!login) {
+      return res.json({error: '未登录'})
+    }
+    if (!req.session.userInfo.appAdmin) {
+      return res.json({error: '当前用户没有APP管理权限！！！'})
+    }
   }
   let importJobName = config.jenkinsModuleImportJobName
   jenkinsService.checkJenkinsJobStatus(importJobName).then(data => {
@@ -42,7 +44,7 @@ function checkModuleImportJobStatus (req, res) {
 // 检查模块构建任务的状态
 function checkModuleBuildJobStatus (req, res) {
   let login = !!req.session.userInfo
-  if (!login) {
+  if (!config.guestMode && !login) {
     return res.json({error: '未登录'})
   }
   // 检测参数
@@ -59,7 +61,7 @@ function checkModuleBuildJobStatus (req, res) {
       admin = true
     }
   })
-  if (!admin) {
+  if (!config.guestMode && !admin) {
     return res.json({error: '当前用户没有该模块的权限，不能进行删除操作'})
   }
   jenkinsService.checkJenkinsJobStatus(jobName).then(data => {
@@ -69,7 +71,8 @@ function checkModuleBuildJobStatus (req, res) {
   })
 }
 
-function moduleBuild (req, res) {
+// 模块构建
+function buildModule (req, res) {
   let login = !!req.session.userInfo
   if (!login) {
     return res.json({error: '未登录'})
@@ -122,7 +125,7 @@ function checkJenkinsBuildStatus (req, res) {
 
 function dispatchJenkinsRouter (app) {
   app.post('/api/jenkins/module/status', checkModuleBuildJobStatus)
-  app.post('/api/jenkins/module/build', moduleBuild)
+  app.post('/api/jenkins/module/build', buildModule)
   app.get('/api/jenkins/build', checkJenkinsBuildStatus)
   app.get('/api/jenkins/import/status', checkModuleImportJobStatus)
   app.post('/api/jenkins/import/build', importModule)

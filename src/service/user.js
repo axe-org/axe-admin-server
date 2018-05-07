@@ -21,49 +21,36 @@ function initSettingAdmin () {
 
 // 添加用户 ，用户属性为 name , password : 前端传入的是md5后的密码， userAdmin , appAdmin
 function insertUser (user) {
-  return new Promise((resolve, reject) => {
-    userDAO.getUserInfo(user.name).then(userInfo => {
-      if (userInfo) {
-        // 有管理员，则成功，不做处理。
-        reject(new Error('已有用户 ' + user.name + ' ，请修改用户名'))
-      } else {
-        // 添加管理员信息
-        return userDAO.insertUser(user)
-      }
-    }).then(() => {
-      resolve()
-    }).catch(err => {
-      reject(err)
-    })
+  return userDAO.getUserInfo(user.name).then(userInfo => {
+    if (userInfo) {
+      return Promise.reject(new Error('已有用户 ' + user.name + ' ，请修改用户名'))
+    } else {
+      return userDAO.insertUser(user)
+    }
   })
 }
 
-// callback (err, info)
 function logIn (userName, password) {
   let user
-  return new Promise((resolve, reject) => {
-    userDAO.getUserInfo(userName).then(userInfo => {
-      if (!userInfo) {
-        reject(new Error('当前无用户 ' + userName))
+  return userDAO.getUserInfo(userName).then(userInfo => {
+    if (!userInfo) {
+      return Promise.reject(new Error('当前无用户 ' + userName))
+    } else {
+      if (userInfo.password === password) {
+        userDAO.freshUser(userInfo.userId)
+        user = userInfo
+        return userDAO.getUserGroups(userInfo.userId)
       } else {
-        if (userInfo.password === password) {
-          userDAO.freshUser(userInfo.userId)
-          user = userInfo
-          return userDAO.getUserGroups(userInfo.userId)
-        } else {
-          reject(new Error('用户密码输入错误 ！！！'))
-        }
+        return Promise.reject(new Error('用户密码输入错误 ！！！'))
       }
-    }).then((groupsInfo) => {
-      // 对于管理员用户，下发授权信息
-      if (user.appAdmin) {
-        user['dynamicServerAccessControlPath'] = config.dynamicServerAccessControlPath
-        user['offlineServerAccessControlPath'] = config.offlineServerAccessControlPath
-      }
-      resolve(Object.assign(groupsInfo, user))
-    }).catch(err => {
-      reject(err)
-    })
+    }
+  }).then((groupsInfo) => {
+    // 对于管理员用户，下发授权信息
+    if (user.appAdmin) {
+      user['dynamicServerAccessControlPath'] = config.dynamicServerAccessControlPath
+      user['offlineServerAccessControlPath'] = config.offlineServerAccessControlPath
+    }
+    return Object.assign(groupsInfo, user)
   })
 }
 
@@ -85,9 +72,7 @@ function queryUsersList (pageNum) {
       let groupInfo = usersGroupInfo[userInfo.userId]
       userInfo.moduleList = groupInfo.moduleList
     })
-    return new Promise((resolve, reject) => {
-      resolve(ret)
-    })
+    return ret
   })
 }
 

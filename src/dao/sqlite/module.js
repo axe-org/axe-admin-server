@@ -47,9 +47,9 @@ function initDB (_db) {
     version VARCHAR(30) NOT NULL,
     version_code INTEGER NOT NULL,
     current_version VARCHAR(30) DEFAULT NULL,
-    build_count NOT NULL DEFAULT 0,
-    build_failed NOT NULL DEFAULT 0,
-    build_success NOT NULL DEFAULT 0,
+    build_count INTEGER NOT NULL DEFAULT 0,
+    build_failed INTEGER NOT NULL DEFAULT 0,
+    build_success INTEGER NOT NULL DEFAULT 0,
     created_time DATETIME NOT NULL,
     released INT(1) NOT NULL,
     change_log TEXT NOT NULL,
@@ -92,6 +92,7 @@ function getModuleByName (name) {
   })
 }
 
+// 只获取模块信息。
 function getBareModuleInfo (moduleId) {
   return db.get('SELECT * FROM module WHERE id =?', [moduleId]).then(row => {
     if (!row) {
@@ -174,6 +175,7 @@ function getModuleList (query) {
   let nameLimitSQL = ''
   if (query.name && query.name !== '') {
     nameLimitSQL = ` AND name LIKE ? `
+    // 参数化查询，不能直接拼装字符串。
     param.push('%' + query.name + '%')
   }
   // 类型限定
@@ -183,16 +185,16 @@ function getModuleList (query) {
     param.push(query['type'])
   }
   // 模块管理员限定
-  let adminLimitSql = ''
+  let adminLimitSQL = ''
   if (query.adminUser) {
-    adminLimitSql = `AND id IN (SELECT module_id FROM user_group WHERE user_id = ?)`
+    adminLimitSQL = `AND id IN (SELECT module_id FROM user_group WHERE user_id = ?)`
     param.push(query['adminUser'])
   }
-  // 模块id限定，在第一步查询后， 通过该限定以获取一些统计信息。 (1,2,3)
+  // 模块id限定，在第一步查询后， 记录模块ID列表。如 (1,2,3)
   let moduleLimitStr = ' '
   param.push(query.pageSize)
   param.push(query.pageNum * query.pageSize)
-  return db.all(`SELECT * FROM module WHERE 1 ${nameLimitSQL} ${typeLimitSQL} ${adminLimitSql}
+  return db.all(`SELECT * FROM module WHERE 1 ${nameLimitSQL} ${typeLimitSQL} ${adminLimitSQL}
   ORDER BY operation_time DESC LIMIT ? OFFSET ? ;`, param).then((rows) => {
     data['moduleList'] = []
     moduleIDList = []
@@ -213,7 +215,7 @@ function getModuleList (query) {
   }).then(() => {
     param.pop()
     param.pop()
-    return db.get(`SELECT COUNT(*) AS count FROM module WHERE 1 ${nameLimitSQL} ${typeLimitSQL} ${adminLimitSql} `, param)
+    return db.get(`SELECT COUNT(*) AS count FROM module WHERE 1 ${nameLimitSQL} ${typeLimitSQL} ${adminLimitSQL} `, param)
   }).then((row) => {
     let pageCount = parseInt(row.count / query.pageSize) + 1
     data['pageCount'] = pageCount
@@ -280,7 +282,7 @@ function updateModuleOperationTime (moduleId) {
   return db.run(`UPDATE module SET operation_time = DATETIME('now','localtime') WHERE id = ?`, [moduleId])
 }
 
-// 创建版本前，先检测版本号是否能创建， 即大于最大生产版本号， 且重复。
+// 创建版本前，先检测版本号是否能创建， 即大于最大生产版本号， 且不重复。
 function checkModuleVersionCanCreate (moduleId, versionCode) {
   return db.get(`SELECT MAX(version_code),version FROM module_version WHERE released = 1 AND module_id = ?`, [moduleId]).then(row => {
     if (row && row['MAX(version_code)']) {

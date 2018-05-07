@@ -97,6 +97,7 @@ function deleteTimeLineAction (req, res) {
       }
       moduleService.updateModuleOperationTime(moduleId)
     }
+    // 前端控制事件类型。
     timelineService.deleteTimeLineAction(actionId).then(() => {
       res.json({})
     }).catch(err => {
